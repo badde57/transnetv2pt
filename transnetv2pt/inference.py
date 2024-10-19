@@ -8,7 +8,9 @@ import os
 
 model = TransNetV2()
 state_dict = torch.load(
-    f"{os.path.dirname(os.path.abspath(__file__))}/transnetv2-pytorch-weights.pth")
+    f"{os.path.dirname(os.path.abspath(__file__))}/transnetv2-pytorch-weights.pth",
+    weights_only=False
+    )
 model.load_state_dict(state_dict)
 model.eval()
 
