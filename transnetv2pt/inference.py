@@ -36,7 +36,8 @@ def input_iterator(frames):
         yield out[np.newaxis]
 
 
-def predictions_to_scenes(predictions: np.ndarray, threshold: float = 0.5):
+def predictions_to_scenes(predictions: np.ndarray, threshold: float = 0.5, probs: bool = False):
+    p0 = predictions
     predictions = (predictions > threshold).astype(np.uint8)
 
     scenes = []
@@ -45,16 +46,22 @@ def predictions_to_scenes(predictions: np.ndarray, threshold: float = 0.5):
         if t_prev == 1 and t == 0:
             start = i
         if t_prev == 0 and t == 1 and i != 0:
-            scenes.append([start, i])
+            if probs:
+                scenes.append([start, i, p0[i]])
+            else:
+                scenes.append([start, i])
         t_prev = t
     if t == 0:
-        scenes.append([start, i])
+        if probs:
+            scenes.append([start, i, p0[i]])
+        else:
+            scenes.append([start, i])
 
     # just fix if all predictions are 1
     if len(scenes) == 0:
-        return np.array([[0, len(predictions) - 1]], dtype=np.int32)
+        return np.array([[0, len(predictions) - 1]])#, dtype=np.int32)
 
-    return np.array(scenes, dtype=np.int32)
+    return np.array(scenes)#, dtype=np.int32)
 
 
 def predict_raw(model, video, device=torch.device('cuda:0')):
@@ -84,7 +91,7 @@ def predict_raw(model, video, device=torch.device('cuda:0')):
         return video.shape[0], single_frame_pred[:len(video)], all_frames_pred[:len(video)]
 
 
-def predict_video(filename_or_video):
+def predict_video(filename_or_video, threshold: float = 0.5, probs: bool = False):
     if isinstance(filename_or_video, str):
         video_stream, err = ffmpeg.input(filename_or_video).output(
             "pipe:", format="rawvideo", pix_fmt="rgb24", s="48x27"
@@ -94,5 +101,5 @@ def predict_video(filename_or_video):
         assert filename_or_video.shape[1] == 27 and filename_or_video.shape[2] == 48 and filename_or_video.shape[3] == 3
         video = filename_or_video
     _, single_frame_pred, _ = predict_raw(model, video)
-    scenes = predictions_to_scenes(single_frame_pred)
+    scenes = predictions_to_scenes(single_frame_pred, threshold=threshold, probs=probs)
     return scenes
