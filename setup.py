@@ -15,7 +15,7 @@ setup(
         ]
     },
     packages=["transnetv2"],
-    package_dir={"transnetv2": "./inference-pytorch"}, # Changed to inference-pytorch
-    package_data={"transnetv2": ["transnetv2-pytorch-weights.pth"]}, # Adjusted for PyTorch weights
+    package_dir={"transnetv2": "inference-pytorch"},
+    package_data={"transnetv2": ["transnetv2-pytorch-weights.pth"]},
     zip_safe=False
 )
